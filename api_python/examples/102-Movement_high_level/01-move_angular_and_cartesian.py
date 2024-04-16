@@ -23,9 +23,12 @@ from kortex_api.autogen.client_stubs.BaseCyclicClientRpc import BaseCyclicClient
 from kortex_api.autogen.messages import Base_pb2, BaseCyclic_pb2, Common_pb2
 
 # Maximum allowed waiting time during actions (in seconds)
+# Temps d’attente maximal autorisé pendant les actions (en secondes)
+
 TIMEOUT_DURATION = 20
 
 # Create closure to set an event after an END or an ABORT
+# Créer une fermeture pour définir un événement après un END ou un ABORT
 def check_for_end_or_abort(e):
     """Return a closure checking for END or ABORT notifications
 
@@ -42,12 +45,13 @@ def check_for_end_or_abort(e):
     return check
  
 def example_move_to_home_position(base):
-    # Make sure the arm is in Single Level Servoing mode
+    # Make sure the arm is in Single Level Servoing mode (Assurez-vous que le bras est en mode d’asservissement à un seul niveau)
+    
     base_servo_mode = Base_pb2.ServoingModeInformation()
     base_servo_mode.servoing_mode = Base_pb2.SINGLE_LEVEL_SERVOING
     base.SetServoingMode(base_servo_mode)
     
-    # Move arm to ready position
+    # Move arm to ready position (Déplacer le bras en position sécuritaire)
     print("Moving the arm to a safe position")
     action_type = Base_pb2.RequestedActionType()
     action_type.action_type = Base_pb2.REACH_JOINT_ANGLES
@@ -87,6 +91,7 @@ def example_angular_action_movement(base):
     actuator_count = base.GetActuatorCount()
 
     # Place arm straight up
+    # Placez le bras droit vers le haut (mettre tous les juints à 0)
     for joint_id in range(actuator_count.count):
         joint_angle = action.reach_joint_angles.joint_angles.joint_angles.add()
         joint_angle.joint_identifier = joint_id
@@ -112,7 +117,7 @@ def example_angular_action_movement(base):
     return finished
 
 
-def example_cartesian_action_movement(base, base_cyclic):
+def example_cartesian_action_movement(base, base_cyclic, x, y, z):
     
     print("Starting Cartesian action movement ...")
     action = Base_pb2.Action()
@@ -122,9 +127,9 @@ def example_cartesian_action_movement(base, base_cyclic):
     feedback = base_cyclic.RefreshFeedback()
 
     cartesian_pose = action.reach_pose.target_pose
-    cartesian_pose.x = feedback.base.tool_pose_x          # (meters)
-    cartesian_pose.y = feedback.base.tool_pose_y - 0.1    # (meters)
-    cartesian_pose.z = feedback.base.tool_pose_z - 0.2    # (meters)
+    cartesian_pose.x = feedback.base.tool_pose_x + x    # (+x est une coordonnée relative, = x absolue en meters)
+    cartesian_pose.y = feedback.base.tool_pose_y + y    # (meters)
+    cartesian_pose.z = feedback.base.tool_pose_z + z    # (meters)
     cartesian_pose.theta_x = feedback.base.tool_pose_theta_x # (degrees)
     cartesian_pose.theta_y = feedback.base.tool_pose_theta_y # (degrees)
     cartesian_pose.theta_z = feedback.base.tool_pose_theta_z # (degrees)
@@ -154,25 +159,31 @@ def main():
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     import utilities
 
-    # Parse arguments
+    # Parse arguments (Analyser les arguments)
     args = utilities.parseConnectionArguments()
     
-    # Create connection to the device and get the router
+    # Create connection to the device and get the router (Créez une connexion à l’appareil et obtenez le routeur)
     with utilities.DeviceConnection.createTcpConnection(args) as router:
 
-        # Create required services
+        # Create required services (Créer les services requis)
         base = BaseClient(router)
         base_cyclic = BaseCyclicClient(router)
 
-        # Example core
+        # Example core (Exemple de noyau)
         success = True
 
         success &= example_move_to_home_position(base)
-        success &= example_cartesian_action_movement(base, base_cyclic)
+        for i in range(5):
+            success &= example_cartesian_action_movement(base, base_cyclic, 0.1, 0, 0)
+            success &= example_cartesian_action_movement(base, base_cyclic, 0, 0.1, 0)
+            success &= example_cartesian_action_movement(base, base_cyclic, -0.1, 0, 0)
+            success &= example_cartesian_action_movement(base, base_cyclic, 0, -0.1, 0)
         success &= example_angular_action_movement(base)
 
         # You can also refer to the 110-Waypoints examples if you want to execute
         # a trajectory defined by a series of waypoints in joint space or in Cartesian space
+        # Vous pouvez aussi revenir à l’exemple 110-Waypoints si vous voulez exécuter
+        # un trajet défini par une série de points de jointe ou en cartesienne
 
         return 0 if success else 1
 
