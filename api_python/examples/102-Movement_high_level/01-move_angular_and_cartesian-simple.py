@@ -80,7 +80,7 @@ actuator = action.reach_joint_angles.joint_angles.joint_angles
 for joint_id in range(6):
     actuator.add()                                    # creer un nouveau joint                 
     actuator[joint_id].joint_identifier = joint_id    # attribuer au joint créer le no joint_id   
-    actuator[joint_id].value = 0                      # attribuer au joint créer l'angle 0 
+    actuator[joint_id].value = joint_id*25            # attribuer au joint créer l'angle 0 
 
 print("Executing action")
 base.ExecuteAction(action)                            # execution de l'action   
