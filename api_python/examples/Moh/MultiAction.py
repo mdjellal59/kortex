@@ -240,7 +240,7 @@ def _allerAngulaire(tableauAngles):
         actuator[joint_id].value = angle                  # attribuer au joint créer l'angle
     # On imprime un message detaillant chaque angle
     print(f"    Deplacement angulaire reel des actuateurs : {"º, ".join([f'{v:.2f}' for v in tableauAngles])}º")
-    _allerPositionCartesien(lambda : base.ExecuteAction(action))
+    _ExecuteEtAttend(lambda : base.ExecuteAction(action))
 
 # Aller a une position absolue sue le plan angulaire. Ne fournis que les valeur requise
 # ex : si on veux monter bouger tout les moteurs a la position verticale 0, on a :
